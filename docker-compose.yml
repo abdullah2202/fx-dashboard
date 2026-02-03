@@ -1,0 +1,14 @@
+services:
+  dashboard:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - dashboard-data:/data
+    environment:
+      - DATABASE_URL=sqlite:////data/trading.db
+      - SECRET_KEY=SECRET-KEY-1234567890
+    restart: unless-stopped
+
+volumes:
+  dashboard-data:

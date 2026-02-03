@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient-start: #0f0f23;
+            --bg-gradient-end: #1a1a2e;
+            --card-bg: rgba(30, 30, 50, 0.8);
+            --accent-green: #00d9a5;
+            --accent-red: #ff6b6b;
+            --accent-blue: #4dabf7;
+            --accent-purple: #9775fa;
+        }
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+        }
+        
+        .dashboard-header {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+        }
+        
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 217, 165, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .stat-value.positive { color: var(--accent-green); }
+        .stat-value.negative { color: var(--accent-red); }
+        
+        .stat-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .event-feed {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .event-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid transparent;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .event-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+        
+        .event-item.ENTRY { border-left-color: var(--accent-green); }
+        .event-item.EXIT { border-left-color: var(--accent-red); }
+        .event-item.SETUP { border-left-color: var(--accent-blue); }
+        .event-item.UPDATE { border-left-color: var(--accent-purple); }
+        
+        .event-type-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+        
+        .event-type-badge.ENTRY { background: rgba(0, 217, 165, 0.2); color: var(--accent-green); }
+        .event-type-badge.EXIT { background: rgba(255, 107, 107, 0.2); color: var(--accent-red); }
+        .event-type-badge.SETUP { background: rgba(77, 171, 247, 0.2); color: var(--accent-blue); }
+        .event-type-badge.UPDATE { background: rgba(151, 117, 250, 0.2); color: var(--accent-purple); }
+        
+        .bot-id {
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .timestamp {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+        }
+        
+        .table-custom {
+            --bs-table-bg: transparent;
+            --bs-table-color: #fff;
+        }
+        
+        .table-custom thead th {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 1rem;
+        }
+        
+        .table-custom tbody td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            vertical-align: middle;
+        }
+        
+        .pnl-positive { color: var(--accent-green); font-weight: 600; }
+        .pnl-negative { color: var(--accent-red); font-weight: 600; }
+        
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        .section-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="container-fluid px-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="logo">📊 Trading Dashboard</span>
+                <div class="text-muted">
+                    <span class="live-indicator"></span>
+                    <span id="current-time"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container-fluid px-4 py-4">
+        <!-- Stats Overview -->
+        <div class="row g-4 mb-4" id="stats-overview">
+            <div class="col-md-3">
+                <div class="glass-card">
+                    <div class="stat-label">Active Bots</div>
+                    <div class="stat-value" id="stat-bots">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card">
+                    <div class="stat-label">Today's Events</div>
+                    <div class="stat-value" id="stat-events">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card">
+                    <div class="stat-label">Total PnL</div>
+                    <div class="stat-value" id="stat-pnl">$0.00</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card">
+                    <div class="stat-label">Avg Win Rate</div>
+                    <div class="stat-value" id="stat-winrate">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Live Feed -->
+            <div class="col-lg-5">
+                <div class="glass-card h-100">
+                    <div class="section-title">
+                        <span class="live-indicator"></span>
+                        Live Event Feed
+                    </div>
+                    <div class="event-feed" id="event-feed">
+                        <div class="text-center text-muted py-5">
+                            Waiting for events...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Table -->
+            <div class="col-lg-7">
+                <div class="glass-card h-100">
+                    <div class="section-title">Today's Performance</div>
+                    <div class="table-responsive">
+                        <table class="table table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Bot ID</th>
+                                    <th>Entries</th>
+                                    <th>Exits</th>
+                                    <th>Win Rate</th>
+                                    <th>PnL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summary-table">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        No data for today
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Format timestamp
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleTimeString();
+        }
+
+        // Render event item
+        function renderEvent(event) {
+            const detailsStr = event.details ? JSON.stringify(event.details) : '';
+            return `
+                <div class="event-item ${event.event_type}">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="bot-id">${event.bot_id}</span>
+                        <span class="event-type-badge ${event.event_type}">${event.event_type}</span>
+                    </div>
+                    <div class="timestamp">${formatTime(event.timestamp)}</div>
+                    ${detailsStr ? `<div class="mt-2 small text-muted">${detailsStr}</div>` : ''}
+                </div>
+            `;
+        }
+
+        // Fetch and display events
+        async function fetchEvents() {
+            try {
+                const response = await fetch('/api/events?limit=50');
+                const events = await response.json();
+                
+                const feed = document.getElementById('event-feed');
+                if (events.length === 0) {
+                    feed.innerHTML = '<div class="text-center text-muted py-5">Waiting for events...</div>';
+                } else {
+                    feed.innerHTML = events.map(renderEvent).join('');
+                }
+            } catch (error) {
+                console.error('Error fetching events:', error);
+            }
+        }
+
+        // Fetch and display summary
+        async function fetchSummary() {
+            try {
+                const response = await fetch('/api/summary');
+                const data = await response.json();
+                
+                const tableBody = document.getElementById('summary-table');
+                const bots = data.bots || [];
+                
+                if (bots.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                No data for today
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tableBody.innerHTML = bots.map(bot => `
+                        <tr>
+                            <td class="fw-semibold">${bot.bot_id}</td>
+                            <td>${bot.entries}</td>
+                            <td>${bot.exits}</td>
+                            <td>${bot.win_rate}%</td>
+                            <td class="${bot.total_pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">
+                                ${bot.total_pnl >= 0 ? '+' : ''}$${bot.total_pnl.toFixed(2)}
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+                
+                // Update stats
+                document.getElementById('stat-bots').textContent = bots.length;
+                
+                const totalEvents = bots.reduce((sum, b) => sum + b.total_events, 0);
+                document.getElementById('stat-events').textContent = totalEvents;
+                
+                const totalPnl = bots.reduce((sum, b) => sum + b.total_pnl, 0);
+                const pnlEl = document.getElementById('stat-pnl');
+                pnlEl.textContent = `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`;
+                pnlEl.className = `stat-value ${totalPnl >= 0 ? 'positive' : 'negative'}`;
+                
+                const avgWinRate = bots.length > 0 
+                    ? (bots.reduce((sum, b) => sum + b.win_rate, 0) / bots.length).toFixed(1)
+                    : 0;
+                document.getElementById('stat-winrate').textContent = `${avgWinRate}%`;
+                
+            } catch (error) {
+                console.error('Error fetching summary:', error);
+            }
+        }
+
+        // Initial fetch
+        fetchEvents();
+        fetchSummary();
+
+        // Auto-refresh every 5 seconds
+        setInterval(fetchEvents, 5000);
+        setInterval(fetchSummary, 10000);
+    </script>
+</body>
+</html>
