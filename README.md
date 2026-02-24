@@ -2,7 +2,7 @@
 
 A Flask-based API for trading bots to log events, with a real-time dashboard to monitor performance.
 
-![Dashboard Screenshot](https://github.com/abdullah2202/fx-dashboard/raw/main/docs/dashboard.png)
+[//]: # ![Dashboard Screenshot](https://github.com/abdullah2202/fx-dashboard/raw/main/docs/dashboard.png)
 
 ## Features
 
