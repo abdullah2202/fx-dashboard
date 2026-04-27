@@ -3,12 +3,22 @@ services:
     build: .
     ports:
       - "5000:5000"
-    volumes:
-      - dashboard-data:/data
     environment:
-      - DATABASE_URL=sqlite:////data/trading.db
+      - DATABASE_URL=postgresql://fxuser:fxpassword@db:5432/fxdata
       - SECRET_KEY=SECRET-KEY-1234567890
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=fxuser
+      - POSTGRES_PASSWORD=fxpassword
+      - POSTGRES_DB=fxdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
     restart: unless-stopped
 
 volumes:
-  dashboard-data:
+  postgres-data:

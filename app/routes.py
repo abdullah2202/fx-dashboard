@@ -2,7 +2,7 @@ from datetime import datetime, date
 from flask import Blueprint, request, jsonify, render_template
 from sqlalchemy import func
 from app import db
-from app.models import Event
+from app.models import Event, Candle
 
 bp = Blueprint('main', __name__)
 
@@ -45,6 +45,57 @@ def log_event():
     db.session.commit()
     
     return jsonify({'status': 'success', 'id': event.id}), 201
+
+
+@bp.route('/api/candle', methods=['POST'])
+def log_candle():
+    """Receive and store a candle log from a trading bot."""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'status': 'error', 'message': 'No JSON data provided'}), 400
+    
+    required_fields = ['bot_id', 'timestamp', 'open', 'high', 'low', 'close']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'status': 'error', 'message': f'Missing required field: {field}'}), 400
+    
+    # Parse timestamp
+    try:
+        timestamp = datetime.fromisoformat(data['timestamp'].replace('Z', '+00:00'))
+    except ValueError:
+        return jsonify({'status': 'error', 'message': 'Invalid timestamp format. Use ISO format.'}), 400
+        
+    candle = Candle(
+        bot_id=data['bot_id'],
+        timestamp=timestamp,
+        open=float(data['open']),
+        high=float(data['high']),
+        low=float(data['low']),
+        close=float(data['close']),
+        volume=float(data.get('volume', 0.0))
+    )
+    
+    db.session.add(candle)
+    db.session.commit()
+    
+    return jsonify({'status': 'success', 'id': candle.id}), 201
+
+
+@bp.route('/api/candles', methods=['GET'])
+def get_candles():
+    """Get recent candles."""
+    limit = request.args.get('limit', 100, type=int)
+    bot_id = request.args.get('bot_id')
+    
+    query = Candle.query.order_by(Candle.timestamp.desc())
+    
+    if bot_id:
+        query = query.filter(Candle.bot_id == bot_id)
+    
+    candles = query.limit(limit).all()
+    # Return in chronological order
+    return jsonify([c.to_dict() for c in reversed(candles)])
 
 
 @bp.route('/api/events', methods=['GET'])

@@ -21,3 +21,30 @@ class Event(db.Model):
             'details': self.details,
             'created_at': self.created_at.isoformat()
         }
+
+
+class Candle(db.Model):
+    __tablename__ = 'candles'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    bot_id = db.Column(db.String(100), nullable=False, index=True)
+    timestamp = db.Column(db.DateTime, nullable=False, index=True)
+    open = db.Column(db.Float, nullable=False)
+    high = db.Column(db.Float, nullable=False)
+    low = db.Column(db.Float, nullable=False)
+    close = db.Column(db.Float, nullable=False)
+    volume = db.Column(db.Float, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'bot_id': self.bot_id,
+            'timestamp': self.timestamp.isoformat(),
+            'open': self.open,
+            'high': self.high,
+            'low': self.low,
+            'close': self.close,
+            'volume': self.volume,
+            'created_at': self.created_at.isoformat()
+        }
